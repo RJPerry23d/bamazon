@@ -20,14 +20,14 @@ connection.connect(function(err) {
 
 function start() {
 
-    console.log("\n\nWelcome to Bamazon!\n\n" +
-        "=========================================\n" +
-        "=  X X X      X      X X   X X    XX    =\n" +
-        "=  X   X    X   X    X   X   X    XX    =\n" +
-        "=  X X X    X X X    X       X    XX    =\n" +
-        "=  X   X    X   X    X       X          =\n" +
-        "=  X X X    X   X    X       X    XX    =\n" +
-        "=========================================\n\n")
+    console.log("\n\nWelcome to Bamazon!\n\n"  
+    	+"=========================================\n"
+    	+"=  X X X      X      X X   X X    XX    =\n"
+    	+"=  X   X    X   X    X   X   X    XX    =\n"
+		+"=  X X X    X X X    X       X    XX    =\n"
+		+"=  X   X    X   X    X       X          =\n"
+		+"=  X X X    X   X    X       X    XX    =\n"
+		+"=========================================\n\n")
 
 
 
@@ -38,7 +38,9 @@ function start() {
         message: "What would you like to do?",
         choices: [
             "View Products for Sale",
-            "Buy an item"
+            "View Low Inventory",
+            "Add to Inventory",
+            "Add New Product"
         ]
     }).then(function(answer) {
         switch (answer.action) {
@@ -46,10 +48,17 @@ function start() {
                 products();
                 break;
 
-            case "Buy an item":
-                buyItem();
+            case "View Low Inventory":
+                lowInventory();
                 break;
 
+            case "Add to Inventory":
+                addInventory();
+                break;
+
+            case "Add New Product":
+                newProduct();
+                break;
             default:
                 console.log("case not working")
 
@@ -68,8 +77,21 @@ function products() {
 
 }
 
+function lowInventory() {
+    connection.query("SELECT * FROM products", function(error, response) {
+    	console.log("\n================================================\n")
+        for (var i = 0; i < response.length; i++) {
+            if (response[i].stock_quantity < 5) {
+                console.log("Inventory is low on: " + response[i].product_name + " There are only " + response[i].stock_quantity + " remaining in inventory.");
+            }
+        }
+        start();
 
-function buyItem() {
+    })
+
+}
+
+function addInventory() {
     connection.query("SELECT * FROM products", function(error, response) {
         inquirer.prompt({
             name: "selectItem",
@@ -77,6 +99,7 @@ function buyItem() {
             choices: function(value) {
                 var productNameArray = [];
                 for (var i = 0; i < response.length; i++) {
+                    //had to conver int to string for prompt to work
                     var productName = response[i].product_name;
                     productNameArray.push(productName);
 
@@ -86,7 +109,7 @@ function buyItem() {
 
             },
 
-            message: "Please select the item that you would like to buy."
+            message: "Please select the item that you would like to add more inventory for"
 
         }).then(function(answer) {
             for (var i = 0; i < response.length; i++) {
@@ -95,7 +118,7 @@ function buyItem() {
                     inquirer.prompt({
                         name: "quantity",
                         type: "input",
-                        message: "How many items would you like to buy?",
+                        message: "How many items would you like to add to the inventory?",
                         validate: function(value) {
                             if (isNaN(value) == false) {
                                 return true;
@@ -104,14 +127,14 @@ function buyItem() {
                             }
                         }
                     }).then(function(answer) {
-                        var inventoryPurchased = answer.quantity;
+                        var inventoryAdded = answer.quantity;
                         connection.query("UPDATE products SET ? WHERE ?", [{
                             stock_quantity: (parseInt(chosenItem.stock_quantity) +
-                                parseInt(inventoryPurchased))
+                                parseInt(inventoryAdded))
                         }, {
                             item_id: chosenItem.item_id
                         }], function(err, response) {
-                            console.log("You have purchased " + inventoryPurchased + " " + chosenItem.product_name)
+                            console.log("You have added " + inventoryAdded + " " + chosenItem.product_name)
 
                             start();
                         });
