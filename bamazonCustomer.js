@@ -71,55 +71,57 @@ function products() {
 
 function buyItem() {
     connection.query("SELECT * FROM products", function(error, response) {
-        inquirer.prompt({
-            name: "selectItem",
-            type: "rawlist",
-            choices: function(value) {
-                var productNameArray = [];
-                for (var i = 0; i < response.length; i++) {
-                    var productName = response[i].product_name;
-                    productNameArray.push(productName);
+        
+        inquirer.prompt([
+    {
+      type: "input",
+      name: "itemID",
+      message: "What is the ID of the product you would like to purchase?",
+      validate: function(value){
+        if(isNaN(value) == false && parseInt(value) <= response.length && parseInt(value) > 0){
+          return true;
+        } else{
+          return false;
+        }
+      }
+    },
+    {
+      type: "input",
+      name: "quantity",
+      message: "What quantity would you like to purchase?",
+      validate: function(value){
+        if(isNaN(value)){
+          return false;
+        } else{
+          return true;
+        }
+      }
+    }
+    ]).then(function(answer) {
 
-                }
-                return productNameArray;
+            var purchasedItem = (answer.itemID) - 1;
+            var numberToBuy = parseInt(answer.quantity);
+            var purchaseTotal = parseFloat(((response[purchasedItem].Price) * numberToBuy).toFixed(2));
+
+            //check if quantity is sufficient
+            if (response[purchasedItem].StockQuantity >= numberToBuy) {
+                //after purchase, updates quantity in Products
+                connection.query("UPDATE Products SET ? WHERE ?", [{
+                    StockQuantity: (response[purchasedItem].StockQuantity - numberToBuy)
+                }, {
+                    ItemID: answer.itemID
+                }], function(err, result) {
+                    if (err) throw err;
+                    console.log("Success! Your total is $" + purchaseTotal.toFixed(2) + ". Thanks for your business with Bamazon!");
+                    start();
+                });
 
 
-            },
-
-            message: "Please select the item that you would like to buy."
-
-        }).then(function(answer) {
-            for (var i = 0; i < response.length; i++) {
-                if (response[i].product_name == answer.selectItem) {
-                    var chosenItem = response[i];
-                    inquirer.prompt({
-                        name: "quantity",
-                        type: "input",
-                        message: "How many items would you like to buy?",
-                        validate: function(value) {
-                            if (isNaN(value) == false) {
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        }
-                    }).then(function(answer) {
-                        var inventoryPurchased = answer.quantity;
-                        connection.query("UPDATE products SET ? WHERE ?", [{
-                            stock_quantity: (parseInt(chosenItem.stock_quantity) +
-                                parseInt(inventoryPurchased))
-                        }, {
-                            item_id: chosenItem.item_id
-                        }], function(err, response) {
-                            console.log("You have purchased " + inventoryPurchased + " " + chosenItem.product_name)
-
-                            start();
-                        });
-                    })
-                }
-
+            } else {
+                console.log("uh-oh! We don't seem to have enough inventory in stock, sorry!");
+                start();
             }
+
         })
     })
 }
-
