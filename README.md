@@ -37,4 +37,4 @@ If a manager selects Add to Inventory, your app will display a prompt that will 
 If a manager selects Add New Product, it will allow the manager to add a completely new product to the store.
 
 
-view a video of it in action here  [Bamazon Video](https://youtu.be/F72zcqcBMpE)
+# view a video of it in action here  [Bamazon Video](https://youtu.be/xxzkB3mRZgg)
